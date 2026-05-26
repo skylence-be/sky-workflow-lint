@@ -23,6 +23,9 @@ import (
 	"github.com/skylence-be/sky-workflow-lint/workflow"
 )
 
+// version is set at build time via -ldflags "-X main.version=<tag>".
+var version = "dev"
+
 func main() {
 	os.Exit(run(os.Args[1:]))
 }
