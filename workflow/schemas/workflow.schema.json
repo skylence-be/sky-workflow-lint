@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skylence.be/schemas/workflow.schema.json",
+  "title": "Skylence Workflow",
+  "description": "Shape, type, and enum validation for a parsed .sky workflow. Parser still owns exclusivity rules (e.g. exactly one execution kind per node).",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "output_style": {
+      "type": "string",
+      "enum": ["", "terse"]
+    },
+    "trigger": {
+      "type": "object",
+      "properties": {
+        "github": {
+          "type": "object",
+          "properties": {
+            "events": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "label": { "type": "string" }
+          }
+        },
+        "sky_event": {
+          "type": "object",
+          "properties": {
+            "event": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "run_doc": {
+      "type": "boolean"
+    },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "prompt": { "type": "string" },
+        "model": { "$ref": "#/$defs/modelEnum" },
+        "mode": { "type": "string" },
+        "advisor": { "type": "boolean" },
+        "isolation": { "$ref": "#/$defs/isolationEnum" },
+        "effort": { "type": "string" },
+        "max_budget_usd": { "type": "number", "minimum": 0 },
+        "max_turns": { "type": "integer", "minimum": 1 },
+        "emit": { "$ref": "#/$defs/emitConfig" }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "when": { "type": "string" },
+        "command": { "type": "string" },
+        "prompt": { "type": "string" },
+        "bash": { "type": "string" },
+        "http": { "$ref": "#/$defs/httpConfig" },
+        "eval": { "$ref": "#/$defs/evalConfig" },
+        "loop": { "$ref": "#/$defs/loopConfig" },
+        "wait": { "$ref": "#/$defs/waitConfig" },
+        "approval": { "$ref": "#/$defs/approvalConfig" },
+        "invoke": { "$ref": "#/$defs/invokeConfig" },
+        "acquire_lock": { "$ref": "#/$defs/lockConfig" },
+        "release_lock": { "$ref": "#/$defs/lockConfig" },
+        "spawn": { "$ref": "#/$defs/spawnConfig" },
+        "council": { "$ref": "#/$defs/councilConfig" },
+        "model": { "$ref": "#/$defs/modelEnum" },
+        "effort": { "type": "string" },
+        "isolation": { "$ref": "#/$defs/isolationEnum" },
+        "max_budget_usd": { "type": "number", "minimum": 0 },
+        "max_turns": { "type": "integer", "minimum": 1 },
+        "trigger_rule": {
+          "type": "string",
+          "enum": ["", "all_done", "all_success", "one_success", "one_failure"]
+        },
+        "chain_from": { "type": "string" },
+        "output_format": { "type": "object" },
+        "emit": { "$ref": "#/$defs/emitConfig" },
+        "permissions": {
+          "type": "string",
+          "enum": ["interactive"]
+        }
+      }
+    },
+    "modelEnum": {
+      "type": "string",
+      "enum": ["", "sonnet", "opus", "haiku"]
+    },
+    "isolationEnum": {
+      "type": "string",
+      "enum": ["", "worktree", "worktree-run"]
+    },
+    "httpConfig": {
+      "type": "object",
+      "required": ["url"],
+      "properties": {
+        "url": { "type": "string", "minLength": 1 },
+        "method": { "type": "string" },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "body": { "type": "string" },
+        "expect_status": { "type": "integer" },
+        "timeout_s": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "evalConfig": {
+      "type": "object",
+      "required": ["source"],
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "contains": { "type": "string" },
+        "matches": { "type": "string" },
+        "equals": { "type": "string" }
+      }
+    },
+    "loopConfig": {
+      "type": "object",
+      "required": ["until"],
+      "properties": {
+        "until": {
+          "type": "object",
+          "properties": {
+            "bash": { "type": "string" },
+            "eval": { "$ref": "#/$defs/evalConfig" }
+          }
+        },
+        "max": { "type": "integer", "minimum": 0 },
+        "idle_timeout_ms": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "waitConfig": {
+      "type": "object",
+      "properties": {
+        "prompt": { "type": "string" },
+        "channel": {
+          "type": "string",
+          "enum": ["", "manual", "webhook"]
+        },
+        "timeout": { "type": "string" },
+        "approvers": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "approvalConfig": {
+      "type": "object",
+      "properties": {
+        "prompt": { "type": "string" },
+        "channel": {
+          "type": "string",
+          "enum": ["", "manual", "webhook"]
+        },
+        "timeout": { "type": "string" },
+        "approvers": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "capture_response": { "type": "boolean" },
+        "on_reject": {
+          "type": "object",
+          "properties": {
+            "prompt": { "type": "string" },
+            "prompt_node": { "type": "string" },
+            "max_attempts": { "type": "integer", "minimum": 0, "maximum": 10 }
+          }
+        }
+      }
+    },
+    "invokeConfig": {
+      "type": "object",
+      "required": ["target"],
+      "properties": {
+        "target": { "type": "string", "minLength": 1 },
+        "vars": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "emitConfig": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "payload": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "lockConfig": {
+      "type": "object",
+      "required": ["key"],
+      "properties": {
+        "key": { "type": "string", "minLength": 1 },
+        "ttl": { "type": "string" }
+      }
+    },
+    "spawnConfig": {
+      "type": "object",
+      "required": ["workers"],
+      "properties": {
+        "workers": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/spawnWorker" }
+        },
+        "max_wait": { "type": "string" },
+        "on_idle": { "type": "string", "enum": ["any", "all"] },
+        "continue_prompt": { "type": "string" },
+        "boundary": { "$ref": "#/$defs/boundaryConfig" }
+      }
+    },
+    "boundaryConfig": {
+      "type": "object",
+      "properties": {
+        "read_only": { "type": "boolean" },
+        "own": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "must_not_edit": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "spawnWorker": {
+      "type": "object",
+      "required": ["id", "prompt"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "prompt": { "type": "string", "minLength": 1 },
+        "model": { "$ref": "#/$defs/modelEnum" }
+      }
+    },
+    "councilConfig": {
+      "type": "object",
+      "required": ["members", "synthesis"],
+      "properties": {
+        "members": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/spawnWorker" }
+        },
+        "synthesis": { "type": "string", "minLength": 1 },
+        "max_wait": { "type": "string" },
+        "max_budget_usd": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}
