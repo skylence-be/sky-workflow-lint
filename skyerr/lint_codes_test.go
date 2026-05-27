@@ -65,6 +65,9 @@ func TestLintCodesCoverAllWFCodes(t *testing.T) {
 		string(skyerr.ErrLearningsConfig),
 		string(skyerr.ErrSafetyClassMissing),
 		string(skyerr.ErrReviewPathsInvalid),
+		string(skyerr.ErrScheduleCronRequired),
+		string(skyerr.ErrScheduleCronInvalid),
+		string(skyerr.ErrScheduleTimezoneInvalid),
 	}
 
 	for _, code := range wfCodes {

@@ -8,7 +8,9 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
+	cron "github.com/robfig/cron/v3"
 	"github.com/skylence-be/sky-workflow-lint/skyerr"
 )
 
@@ -188,6 +190,9 @@ func LintBytes(path string, raw []byte) []Diagnostic { //nolint:funlen // sequen
 	for _, si := range validateSourceTriggers(wf) {
 		diags = append(diags, Diagnostic{File: path, Code: string(si.Code), Message: FormatSchemaIssue(si)})
 	}
+	for _, d := range validateScheduleTrigger(wf) {
+		diags = append(diags, Diagnostic{File: path, Code: d.Code, Message: d.Message})
+	}
 	return diags
 }
 
@@ -214,6 +219,51 @@ func validateSourceTriggers(wf *Workflow) []SchemaIssue {
 		})
 	}
 	return issues
+}
+
+// validateScheduleTrigger validates the schedule trigger block (SKY-WF-096..098).
+func validateScheduleTrigger(wf *Workflow) []Diagnostic {
+	s := wf.Trigger.Schedule
+	if s == nil {
+		return nil
+	}
+	var diags []Diagnostic
+	if s.Cron == "" {
+		diags = append(diags, Diagnostic{
+			Line:    0,
+			Code:    string(skyerr.ErrScheduleCronRequired),
+			Message: fmt.Sprintf("workflow %q: trigger.schedule.cron is required", wf.Name),
+		})
+		return diags // no point parsing empty string
+	}
+	p := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	if _, err := p.Parse(s.Cron); err != nil {
+		diags = append(diags, Diagnostic{
+			Line:    0,
+			Code:    string(skyerr.ErrScheduleCronInvalid),
+			Message: fmt.Sprintf("workflow %q: trigger.schedule.cron %q is invalid: %v", wf.Name, s.Cron, err),
+		})
+	}
+	if s.Timezone != "" {
+		// Reject "Local" explicitly — it resolves to the OS zone, which is
+		// untrusted and non-deterministic across machines. Require an explicit
+		// IANA name so DST transitions (spring-forward gaps, fall-back overlaps)
+		// are handled predictably by time.LoadLocation.
+		if strings.EqualFold(s.Timezone, "local") {
+			diags = append(diags, Diagnostic{
+				Line: 0,
+				Code: string(skyerr.ErrScheduleTimezoneInvalid),
+				Message: fmt.Sprintf("workflow %q: trigger.schedule.timezone %q is not allowed; use an explicit IANA name (e.g. \"UTC\", \"Europe/Brussels\")", wf.Name, s.Timezone),
+			})
+		} else if _, err := time.LoadLocation(s.Timezone); err != nil {
+			diags = append(diags, Diagnostic{
+				Line:    0,
+				Code:    string(skyerr.ErrScheduleTimezoneInvalid),
+				Message: fmt.Sprintf("workflow %q: trigger.schedule.timezone %q is not a valid IANA location", wf.Name, s.Timezone),
+			})
+		}
+	}
+	return diags
 }
 
 // validateInvokeBasic runs invoke-specific checks that do not require tier access:

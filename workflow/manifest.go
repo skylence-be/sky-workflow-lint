@@ -42,6 +42,7 @@ type TriggersManifest struct {
 	Manual   ManualTriggerManifest   `json:"manual"`
 	GitHub   GitHubTriggerManifest   `json:"github"`
 	SkyEvent SkyEventTriggerManifest `json:"sky_event"`
+	Schedule ScheduleTriggerManifest `json:"schedule"`
 }
 
 // ManualTriggerManifest describes the default (no trigger configured) invocation mode.
@@ -58,6 +59,12 @@ type GitHubTriggerManifest struct {
 // SkyEventTriggerManifest describes the sky_event trigger block.
 type SkyEventTriggerManifest struct {
 	Keys map[string]string `json:"keys"`
+}
+
+// ScheduleTriggerManifest describes the schedule trigger block.
+type ScheduleTriggerManifest struct {
+	Keys map[string]string `json:"keys"`
+	Note string            `json:"note"`
 }
 
 // WhenGrammar describes the condition grammar for node.when fields.
@@ -215,6 +222,13 @@ func triggersManifest() TriggersManifest {
 			Keys: map[string]string{
 				"trigger.sky_event.event": "string: exact event name to match; emitted by another workflow's emit node",
 			},
+		},
+		Schedule: ScheduleTriggerManifest{
+			Keys: map[string]string{
+				"cron":     "Standard 5-field cron expression (min hour dom mon dow). Example: \"0 9 * * 1-5\" fires at 09:00 Mon–Fri.",
+				"timezone": "IANA timezone name (e.g. \"America/New_York\"). Defaults to UTC.",
+			},
+			Note: "Fires the workflow on a time-based schedule. The daemon must be running for schedules to execute.",
 		},
 	}
 }
