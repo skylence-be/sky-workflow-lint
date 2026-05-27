@@ -322,6 +322,32 @@ bash = "echo hello"
 	}
 }
 
+func TestLint_ScheduleTimezone_LocalRejected(t *testing.T) {
+	path := writeLintFixture(t, `⊕meta⊕
+name = "sched-local-tz"
+trigger.schedule.cron = "0 9 * * 1-5"
+trigger.schedule.timezone = "Local"
+⊕⊕
+
+§do-thing§
+bash = "echo hello"
+§§
+`)
+	diags, err := Lint(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	found := false
+	for _, d := range diags {
+		if d.Code == "SKY-WF-098" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("want SKY-WF-098 diagnostic for 'Local' timezone, got %+v", diags)
+	}
+}
+
 func TestLint_ScheduleValid(t *testing.T) {
 	path := writeLintFixture(t, `⊕meta⊕
 name = "sched-valid"

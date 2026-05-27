@@ -245,7 +245,17 @@ func validateScheduleTrigger(wf *Workflow) []Diagnostic {
 		})
 	}
 	if s.Timezone != "" {
-		if _, err := time.LoadLocation(s.Timezone); err != nil {
+		// Reject "Local" explicitly — it resolves to the OS zone, which is
+		// untrusted and non-deterministic across machines. Require an explicit
+		// IANA name so DST transitions (spring-forward gaps, fall-back overlaps)
+		// are handled predictably by time.LoadLocation.
+		if strings.EqualFold(s.Timezone, "local") {
+			diags = append(diags, Diagnostic{
+				Line: 0,
+				Code: string(skyerr.ErrScheduleTimezoneInvalid),
+				Message: fmt.Sprintf("workflow %q: trigger.schedule.timezone %q is not allowed; use an explicit IANA name (e.g. \"UTC\", \"Europe/Brussels\")", wf.Name, s.Timezone),
+			})
+		} else if _, err := time.LoadLocation(s.Timezone); err != nil {
 			diags = append(diags, Diagnostic{
 				Line:    0,
 				Code:    string(skyerr.ErrScheduleTimezoneInvalid),
