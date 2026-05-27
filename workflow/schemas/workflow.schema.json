@@ -35,6 +35,13 @@
           "properties": {
             "event": { "type": "string", "minLength": 1 }
           }
+        },
+        "schedule": {
+          "type": "object",
+          "properties": {
+            "cron": { "type": "string" },
+            "timezone": { "type": "string" }
+          }
         }
       }
     },

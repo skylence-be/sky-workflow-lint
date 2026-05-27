@@ -53,6 +53,13 @@ type Trigger struct {
 	Sentry   *SourceTrigger   `json:"sentry,omitempty"`
 	Linear   *SourceTrigger   `json:"linear,omitempty"`
 	Jira     *SourceTrigger   `json:"jira,omitempty"`
+	Schedule *ScheduleTrigger `json:"schedule,omitempty"`
+}
+
+// ScheduleTrigger fires the workflow on a time-based cron schedule.
+type ScheduleTrigger struct {
+	Cron     string `json:"cron"`              // standard 5-field cron expression
+	Timezone string `json:"timezone,omitempty"` // IANA timezone name; defaults to UTC
 }
 
 // SourceTrigger is a generic event-list trigger used by third-party sources

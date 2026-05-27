@@ -126,6 +126,9 @@ const (
 	ErrCheckRunConclusionInvalid Code = "SKY-WF-093" // trigger.github.check_run.conclusion is not a valid GitHub conclusion
 	ErrCheckRunMissingEvent      Code = "SKY-WF-094" // trigger.github.check_run set but events lacks "check_run.completed"
 	ErrSourceTriggerEventsEmpty  Code = "SKY-WF-095" // sentry or linear trigger has no events listed
+	ErrScheduleCronRequired      Code = "SKY-WF-096" // schedule trigger: cron field is required
+	ErrScheduleCronInvalid       Code = "SKY-WF-097" // schedule trigger: cron expression is invalid
+	ErrScheduleTimezoneInvalid   Code = "SKY-WF-098" // schedule trigger: timezone is not a valid IANA location
 )
 
 // ── Runner errors (SKY-RUN-*) ──

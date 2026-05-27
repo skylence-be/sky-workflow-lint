@@ -246,6 +246,104 @@ output_format = {"type": "not-a-valid-type"}
 	}
 }
 
+func TestLint_ScheduleCronRequired(t *testing.T) {
+	path := writeLintFixture(t, `⊕meta⊕
+name = "sched-no-cron"
+trigger.schedule.timezone = "UTC"
+⊕⊕
+
+§do-thing§
+bash = "echo hello"
+§§
+`)
+	diags, err := Lint(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	found := false
+	for _, d := range diags {
+		if d.Code == "SKY-WF-096" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("want SKY-WF-096 diagnostic for missing cron, got %+v", diags)
+	}
+}
+
+func TestLint_ScheduleCronInvalid(t *testing.T) {
+	path := writeLintFixture(t, `⊕meta⊕
+name = "sched-bad-cron"
+trigger.schedule.cron = "not a cron"
+⊕⊕
+
+§do-thing§
+bash = "echo hello"
+§§
+`)
+	diags, err := Lint(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	found := false
+	for _, d := range diags {
+		if d.Code == "SKY-WF-097" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("want SKY-WF-097 diagnostic for invalid cron, got %+v", diags)
+	}
+}
+
+func TestLint_ScheduleTimezoneInvalid(t *testing.T) {
+	path := writeLintFixture(t, `⊕meta⊕
+name = "sched-bad-tz"
+trigger.schedule.cron = "0 9 * * 1-5"
+trigger.schedule.timezone = "Bad/Zone"
+⊕⊕
+
+§do-thing§
+bash = "echo hello"
+§§
+`)
+	diags, err := Lint(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	found := false
+	for _, d := range diags {
+		if d.Code == "SKY-WF-098" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("want SKY-WF-098 diagnostic for invalid timezone, got %+v", diags)
+	}
+}
+
+func TestLint_ScheduleValid(t *testing.T) {
+	path := writeLintFixture(t, `⊕meta⊕
+name = "sched-valid"
+trigger.schedule.cron = "0 9 * * 1-5"
+trigger.schedule.timezone = "America/New_York"
+⊕⊕
+
+§do-thing§
+bash = "echo hello"
+§§
+`)
+	diags, err := Lint(path)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, d := range diags {
+		if d.Code == "SKY-WF-096" || d.Code == "SKY-WF-097" || d.Code == "SKY-WF-098" {
+			t.Errorf("unexpected schedule diagnostic %s: %s", d.Code, d.Message)
+		}
+	}
+}
+
 func TestLint_OutputFormatValidSchema(t *testing.T) {
 	path := writeLintFixture(t, `⊕meta⊕
 name = "lint-output-format-valid"

@@ -90,4 +90,7 @@ var LintCodes = []LintCode{
 	{"SKY-WF-093", "trigger.github.check_run.conclusion is not a valid GitHub conclusion value"},
 	{"SKY-WF-094", "trigger.github.check_run is set but trigger.github.events does not include \"check_run.completed\""},
 	{"SKY-WF-095", "sentry or linear trigger has no events listed"},
+	{"SKY-WF-096", "schedule trigger: cron field is required"},
+	{"SKY-WF-097", "schedule trigger: cron expression is invalid (standard 5-field: min hour dom mon dow)"},
+	{"SKY-WF-098", "schedule trigger: timezone is not a valid IANA location"},
 }
