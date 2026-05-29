@@ -1,7 +1,7 @@
 package workflow
 
 import (
-	"github.com/skylence-be/sky-workflow-lint/skyerr"
+	"github.com/skylence-be/skyerr"
 )
 
 // WorkflowManifest is the machine-readable surface description of the .sky workflow language.

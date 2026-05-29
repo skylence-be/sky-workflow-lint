@@ -11,7 +11,7 @@ import (
 	"time"
 
 	cron "github.com/robfig/cron/v3"
-	"github.com/skylence-be/sky-workflow-lint/skyerr"
+	"github.com/skylence-be/skyerr"
 )
 
 // Diagnostic is a single linting finding from Lint.

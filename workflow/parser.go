@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/skylence-be/sky-workflow-lint/skyerr"
+	"github.com/skylence-be/skyerr"
 )
 
 func Parse(r io.Reader) (*Workflow, error) {

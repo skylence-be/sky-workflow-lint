@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/skylence-be/sky-workflow-lint/skyerr"
+	"github.com/skylence-be/skyerr"
 )
 
 func validateSpawnConfig(wfName, nodeID string, cfg *SpawnConfig) error {
