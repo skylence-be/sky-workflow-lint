@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/skylence-be/sky-workflow-lint/skyerr"
+	"github.com/skylence-be/skyerr"
 )
 
 // The .sky format uses three Unicode delimiters, each with a distinct role:

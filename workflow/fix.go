@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/skylence-be/sky-workflow-lint/skyerr"
+	"github.com/skylence-be/skyerr"
 )
 
 // Confidence indicates how safe a fix is to auto-apply.

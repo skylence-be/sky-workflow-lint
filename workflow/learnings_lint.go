@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/skylence-be/sky-workflow-lint/skyerr"
+	"github.com/skylence-be/skyerr"
 )
 
 // ValidLearningCategories is the authoritative list accepted by the loader, linter, and CLI.

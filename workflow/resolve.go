@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/skylence-be/sky-workflow-lint/skyerr"
+	"github.com/skylence-be/skyerr"
 )
 
 // LoadAllFromRoots loads all workflows across all enabled tiers.
