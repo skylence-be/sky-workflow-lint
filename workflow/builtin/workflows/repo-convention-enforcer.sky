@@ -1,0 +1,54 @@
+⊕meta⊕
+name = "repo-convention-enforcer"
+description = "Audit and fix repo conventions, then gate the push on human approval with reject-and-revise"
+output_style = "terse"
+⊕⊕
+
+§fix-violations§
+model = "sonnet"
+isolation = "worktree"
+§§
+
+∆fix-violations∆
+Audit this repository for convention violations and fix any found.
+
+{{reject_reason}}
+
+Check and fix:
+1. Go formatting: `gofmt -w .` — report any files changed.
+2. Import order: `goimports -w .` if available.
+3. Linting: `golangci-lint run --fix` — list remaining violations that require manual fixes.
+4. Naming: verify Go files use snake_case, workflow files use kebab-case.
+
+After fixing:
+- Run `make lint` to confirm all auto-fixable violations are resolved.
+- List any violations that still require manual intervention.
+- Commit all changes: `git add -A && git commit -m "chore: enforce repo conventions"`
+- Push: `git push -u origin HEAD`
+
+If nothing to fix: output "NO VIOLATIONS FOUND".
+∆∆
+
+§approve-push§
+approval = {"prompt": "Review the convention enforcement changes. Approve to merge the fix branch, or reject with specific feedback on what to adjust.", "capture_response": true, "on_reject": {"prompt_node": "fix-violations", "max_attempts": 2}}
+depends_on = ["fix-violations"]
+§§
+
+§merge-fixes§
+model = "haiku"
+depends_on = ["approve-push"]
+§§
+
+∆merge-fixes∆
+The convention fixes were approved. Merge the branch.
+
+Fix summary: $fix-violations.output
+Reviewer notes: $approve-push.output
+
+If the fix summary was "NO VIOLATIONS FOUND", do nothing and stop.
+
+Otherwise:
+1. Check for existing PR: `gh pr list --head $(git branch --show-current)`
+2. If none: `gh pr create --title "chore: enforce repo conventions" --body "Automated convention enforcement run." --base main`
+3. Merge: `gh pr merge --squash --auto`
+∆∆

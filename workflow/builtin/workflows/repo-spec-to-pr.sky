@@ -1,0 +1,87 @@
+⊕meta⊕
+name = "repo-spec-to-pr"
+description = "Turn a spec into a PR: plan → approval → implement → approval → PR, each gate with reject-and-revise"
+trigger.github.events = ["issues.labeled"]
+trigger.github.label = "sky-spec"
+output_style = "terse"
+⊕⊕
+
+§plan§
+model = "opus"
+effort = "max"
+§§
+
+∆plan∆
+Create an implementation plan for: {{issue.title}}
+
+Spec:
+{{issue.body}}
+
+{{reject_reason}}
+
+Produce a structured plan:
+1. List every file that must change and why.
+2. For each file: approach, risks, edge cases.
+3. Define the test strategy: which new tests to add, which existing ones to update.
+4. Note any breaking changes and required migration steps.
+5. Order changes to minimise risk and ensure each step is independently verifiable.
+
+Do not implement yet — plan only.
+∆∆
+
+§approve-plan§
+approval = {"prompt": "Review the implementation plan for: {{issue.title}}. Approve to proceed to implementation, or reject with specific feedback to revise the plan.", "capture_response": true, "on_reject": {"prompt_node": "plan", "max_attempts": 3}}
+depends_on = ["plan"]
+§§
+
+§implement§
+model = "opus"
+effort = "max"
+isolation = "worktree"
+depends_on = ["approve-plan"]
+§§
+
+∆implement∆
+Implement the approved plan for: {{issue.title}}
+
+Plan:
+$plan.output
+
+Reviewer notes on the plan: $approve-plan.output
+
+{{reject_reason}}
+
+Instructions:
+- Follow the plan exactly. Address any reviewer notes from plan approval.
+- If there is revision feedback above, address it first.
+- Run `make test` after each logical group of changes. Fix all failures before continuing.
+- Commit all changes with clear messages referencing the spec.
+- Push the branch: `git push -u origin HEAD`.
+∆∆
+
+§approve-impl§
+approval = {"prompt": "Review the implementation for: {{issue.title}}. Approve to open a PR, or reject with feedback on what to revise.", "capture_response": true, "on_reject": {"prompt_node": "implement", "max_attempts": 2}}
+depends_on = ["implement"]
+§§
+
+§create-pr§
+model = "sonnet"
+depends_on = ["approve-impl"]
+§§
+
+∆create-pr∆
+Create a pull request for: {{issue.title}}.
+
+Plan summary: $plan.output
+Implementation summary: $implement.output
+Implementation reviewer notes: $approve-impl.output
+
+Instructions:
+1. Confirm all changes are committed: `git status`
+2. Push if not already: `git push -u origin HEAD`
+3. Check for an existing PR: `gh pr list --head $(git branch --show-current)`
+4. Look for `.github/pull_request_template.md` and fill it in if found.
+5. Create a draft PR: `gh pr create --draft`
+   - Title: imperative mood, under 70 chars
+   - Body: plan summary, implementation notes, reviewer feedback if any.
+∆∆
