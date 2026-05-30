@@ -1506,6 +1506,55 @@ command = "also-fix"
 	}
 }
 
+func TestParse_LoopNode_BashFileBody_BashUntil(t *testing.T) {
+	input := `⊕meta⊕
+name = "t"
+trigger.github.events = ["a"]
+⊕⊕
+
+§verify§
+loop.until.bash = "make test"
+loop.max = 5
+bash_file = "./verify.sh"
+§§
+`
+	wf, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	n := wf.Nodes[0]
+	if n.NodeType() != "loop" {
+		t.Errorf("node type = %q, want loop", n.NodeType())
+	}
+	if n.BashFile != "./verify.sh" {
+		t.Errorf("bash_file body = %q, want './verify.sh'", n.BashFile)
+	}
+	if n.Loop.Until.Bash != "make test" {
+		t.Errorf("until.bash = %q, want 'make test'", n.Loop.Until.Bash)
+	}
+}
+
+func TestParse_LoopNode_BashFileWithPrompt_Rejected(t *testing.T) {
+	input := `⊕meta⊕
+name = "t"
+trigger.github.events = ["a"]
+⊕⊕
+
+§verify§
+loop.until.bash = "make test"
+bash_file = "./verify.sh"
+prompt = "also do this"
+§§
+`
+	_, err := Parse(strings.NewReader(input))
+	if err == nil {
+		t.Fatal("expected error for loop mixing bash_file with prompt")
+	}
+	if !strings.Contains(err.Error(), "loop body cannot mix bash with command/prompt") {
+		t.Errorf("error = %q, want loop body mix message", err.Error())
+	}
+}
+
 func TestParse_LoopNode_IdleTimeout_BashBody(t *testing.T) {
 	input := `⊕meta⊕
 name = "t"

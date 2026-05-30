@@ -400,11 +400,11 @@ func validateLoopNode(wfName, nodeID string, n *Node) error {
 		return skyerr.New(skyerr.ErrLoopBodyInvalid,
 			fmt.Sprintf("workflow %q: node %q: loop body cannot be http, eval, wait, cancel, script, approval, acquire_lock, release_lock, spawn, council, or review", wfName, nodeID))
 	}
-	hasBash := n.Bash != ""
+	hasBash := n.Bash != "" || n.BashFile != ""
 	hasClaude := n.Command != "" || n.Prompt != ""
 	if !hasBash && !hasClaude {
 		return skyerr.New(skyerr.ErrNodeMissingAction,
-			fmt.Sprintf("workflow %q: node %q: loop requires a body (command, bash, or prompt)", wfName, nodeID))
+			fmt.Sprintf("workflow %q: node %q: loop requires a body (command, bash, bash_file, or prompt)", wfName, nodeID))
 	}
 	if hasBash && hasClaude {
 		return skyerr.New(skyerr.ErrNodeAmbiguousAction,

@@ -109,8 +109,9 @@ func renderNode(node *Node, repo string, vars map[string]string) RenderedNode {
 		}
 
 	default: // "prompt", "command", "loop"
-		if rn.Kind == "loop" && node.Bash != "" {
-			// Mirror runLoopBody's bash branch — a loop can be a bash loop.
+		if rn.Kind == "loop" && (node.Bash != "" || node.BashFile != "") {
+			// Mirror runLoopBody's bash branch — a loop can be a bash loop
+			// (inline bash or a bash_file script reference).
 			bash, warns := dryRunSubstituteRefs(node.Bash)
 			rn.Bash = prependEnvHeader(bash, vars)
 			rn.Warnings = warns
