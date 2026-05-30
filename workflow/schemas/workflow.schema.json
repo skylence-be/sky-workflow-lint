@@ -86,6 +86,7 @@
         "command": { "type": "string" },
         "prompt": { "type": "string" },
         "bash": { "type": "string" },
+        "bash_file": { "type": "string" },
         "http": { "$ref": "#/$defs/httpConfig" },
         "eval": { "$ref": "#/$defs/evalConfig" },
         "loop": { "$ref": "#/$defs/loopConfig" },

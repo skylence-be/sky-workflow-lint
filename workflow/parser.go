@@ -123,6 +123,9 @@ func validate(wf *Workflow) error {
 			if n.Bash != "" {
 				execKinds++
 			}
+			if n.BashFile != "" {
+				execKinds++
+			}
 			if n.HTTP != nil {
 				execKinds++
 			}
@@ -162,7 +165,11 @@ func validate(wf *Workflow) error {
 			nodeType := n.NodeType()
 			if execKinds == 0 && n.Prompt == "" {
 				return skyerr.New(skyerr.ErrNodeMissingAction,
-					fmt.Sprintf("workflow %q: node %q: prompt, command, bash, http, eval, wait, cancel, script, approval, invoke, acquire_lock, release_lock, spawn, council, or review is required", wf.Name, n.ID))
+					fmt.Sprintf("workflow %q: node %q: prompt, command, bash, bash_file, http, eval, wait, cancel, script, approval, invoke, acquire_lock, release_lock, spawn, council, or review is required", wf.Name, n.ID))
+			}
+			if n.Bash != "" && n.BashFile != "" {
+				return skyerr.New(skyerr.ErrNodeAmbiguousAction,
+					fmt.Sprintf("workflow %q: node %q: bash and bash_file are mutually exclusive", wf.Name, n.ID))
 			}
 			if execKinds > 1 {
 				return skyerr.New(skyerr.ErrNodeAmbiguousAction,

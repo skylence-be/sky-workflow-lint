@@ -128,7 +128,7 @@ trigger.github.events = ["a"]
 	if err == nil {
 		t.Fatal("expected error for node with no action")
 	}
-	if !strings.Contains(err.Error(), "prompt, command, bash, http, eval, wait, cancel, script, approval, invoke, acquire_lock, release_lock, spawn, council, or review is required") {
+	if !strings.Contains(err.Error(), "prompt, command, bash, bash_file, http, eval, wait, cancel, script, approval, invoke, acquire_lock, release_lock, spawn, council, or review is required") {
 		t.Errorf("error = %q, want missing-action message", err.Error())
 	}
 }
@@ -519,7 +519,7 @@ model = "opus"
 	if err == nil {
 		t.Fatal("expected error for node with no action")
 	}
-	if !strings.Contains(err.Error(), "prompt, command, bash, http, eval, wait, cancel, script, approval, invoke, acquire_lock, release_lock, spawn, council, or review is required") {
+	if !strings.Contains(err.Error(), "prompt, command, bash, bash_file, http, eval, wait, cancel, script, approval, invoke, acquire_lock, release_lock, spawn, council, or review is required") {
 		t.Errorf("error = %q, want missing-action message", err.Error())
 	}
 }

@@ -20,6 +20,9 @@ type Diagnostic struct {
 	Line    int    // 0 means file-level
 	Code    string // e.g. skyerr code string like "SKY-WF-001"
 	Message string
+	// Severity is "warning" for non-blocking findings (callers should not flip
+	// the exit code) and "" (treated as error) for blocking findings.
+	Severity string
 }
 
 // LintWithFixes parses and validates a single .sky file, returning diagnostics and
@@ -192,6 +195,9 @@ func LintBytes(path string, raw []byte) []Diagnostic { //nolint:funlen // sequen
 	}
 	for _, d := range validateScheduleTrigger(wf) {
 		diags = append(diags, Diagnostic{File: path, Code: d.Code, Message: d.Message})
+	}
+	for _, d := range ValidateBashFile(wf, path) {
+		diags = append(diags, Diagnostic{File: path, Code: d.Code, Message: d.Message, Severity: d.Severity})
 	}
 	return diags
 }

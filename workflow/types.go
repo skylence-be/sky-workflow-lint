@@ -136,6 +136,7 @@ type Node struct {
 	Command     string          `json:"command,omitempty"`      // reference to .sky/commands/<name>.md
 	Prompt      string          `json:"prompt,omitempty"`       // inline prompt (also supplement for command nodes)
 	Bash        string          `json:"bash,omitempty"`         // shell command
+	BashFile    string          `json:"bash_file,omitempty"`    // path to a shell script (relative to the .sky file); mutually exclusive with bash
 	HTTP        *HTTPConfig     `json:"http,omitempty"`         // outbound HTTP call
 	Eval        *EvalConfig     `json:"eval,omitempty"`         // assertion on a prior node's output
 	Loop        *LoopConfig     `json:"loop,omitempty"`         // repeat body until condition passes
@@ -354,7 +355,7 @@ func (n *Node) NodeType() string {
 		return "spawn"
 	case n.Command != "":
 		return "command"
-	case n.Bash != "":
+	case n.Bash != "" || n.BashFile != "":
 		return "bash"
 	case n.HTTP != nil:
 		return "http"
