@@ -16,7 +16,20 @@ go install github.com/skylence-be/sky-workflow-lint@latest
 sky-workflow-lint [--format text|json|sarif] [--repo-root <path>] <file|glob>...
 ```
 
-**Exit codes:** `0` = no problems, `1` = problems found, `2` = tool error.
+**Exit codes:** `0` = no problems (or warnings only), `1` = blocking problems found, `2` = tool error.
+
+### `bash_file` nodes
+
+A bash node may carry its script in a separate file via `bash_file = "./script.sh"`
+(relative to the `.sky` file) instead of an inline `bash = "..."`. The two are
+mutually exclusive. Related lint codes:
+
+- `SKY-WF-099` — both `bash` and `bash_file` set on the same node (blocking; also
+  rejected at parse time as `SKY-WF-024`).
+- `SKY-WF-100` — `bash_file` references a script that does not exist (blocking).
+- `SKY-WF-101` — bash syntax / shellcheck findings in the referenced script
+  (warning, non-blocking; does not affect the exit code). shellcheck is used when
+  it is on `PATH`; its absence is silent.
 
 ### Examples
 

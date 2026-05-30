@@ -79,10 +79,11 @@ func run(args []string) int {
 		}
 		for _, d := range raw {
 			diags = append(diags, lintfmt.LintDiagnostic{
-				File:    d.File,
-				Line:    d.Line,
-				Message: d.Message,
-				Rule:    d.Code,
+				File:     d.File,
+				Line:     d.Line,
+				Message:  d.Message,
+				Rule:     d.Code,
+				Severity: d.Severity,
 			})
 		}
 	}
@@ -122,8 +123,12 @@ func run(args []string) int {
 	if hasToolErr {
 		return 2
 	}
-	if len(diags) > 0 {
-		return 1
+	// Only blocking diagnostics flip the exit code; "warning" severity findings
+	// (e.g. SKY-WF-101 bash syntax/shellcheck) are advisory and exit 0.
+	for _, d := range diags {
+		if d.Severity != "warning" {
+			return 1
+		}
 	}
 	return 0
 }

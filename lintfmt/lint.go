@@ -49,6 +49,8 @@ type LintDiagnostic struct {
 	Message string `json:"message"`
 	Rule    string `json:"rule,omitempty"`
 	Tier    string `json:"tier,omitempty"`
+	// Severity is "warning" for non-blocking findings; "" is treated as "error".
+	Severity string `json:"severity,omitempty"`
 }
 
 // SARIF 2.1.0 minimal struct set for sky lint output.
@@ -128,9 +130,13 @@ func LintSARIF(diags []LintDiagnostic, repoRoot string) sarifLog {
 			rulesSeen[d.Rule] = true
 		}
 
+		level := "error"
+		if d.Severity == "warning" {
+			level = "warning"
+		}
 		res := sarifResult{
 			RuleID:  d.Rule,
-			Level:   "error",
+			Level:   level,
 			Message: sarifMessage{Text: d.Message},
 		}
 		loc := sarifLocation{
