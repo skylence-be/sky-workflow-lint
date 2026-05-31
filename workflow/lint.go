@@ -199,6 +199,9 @@ func LintBytes(path string, raw []byte) []Diagnostic { //nolint:funlen // sequen
 	for _, d := range ValidateBashFile(wf, path) {
 		diags = append(diags, Diagnostic{File: path, Code: d.Code, Message: d.Message, Severity: d.Severity})
 	}
+	for _, d := range ValidateUI(wf, path) {
+		diags = append(diags, Diagnostic{File: path, Code: d.Code, Message: d.Message, Severity: d.Severity})
+	}
 	for _, d := range lintDocBlocks(wf) {
 		diags = append(diags, Diagnostic{File: path, Code: d.Code, Message: d.Message, Severity: d.Severity, Line: d.Line})
 	}
@@ -260,8 +263,8 @@ func validateScheduleTrigger(wf *Workflow) []Diagnostic {
 		// are handled predictably by time.LoadLocation.
 		if strings.EqualFold(s.Timezone, "local") {
 			diags = append(diags, Diagnostic{
-				Line: 0,
-				Code: string(skyerr.ErrScheduleTimezoneInvalid),
+				Line:    0,
+				Code:    string(skyerr.ErrScheduleTimezoneInvalid),
 				Message: fmt.Sprintf("workflow %q: trigger.schedule.timezone %q is not allowed; use an explicit IANA name (e.g. \"UTC\", \"Europe/Brussels\")", wf.Name, s.Timezone),
 			})
 		} else if _, err := time.LoadLocation(s.Timezone); err != nil {

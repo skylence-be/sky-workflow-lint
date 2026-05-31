@@ -10,6 +10,26 @@ type DocBlock struct {
 	Line   int
 }
 
+// ChangelogEntry is one entry in a workflow's ui changelog (from the
+// `changelog` frontmatter list in the workflow's ui markdown file).
+type ChangelogEntry struct {
+	Version string `json:"version,omitempty"`
+	Date    string `json:"date,omitempty"`
+	Note    string `json:"note"`
+}
+
+// UIDoc is the resolved content of one ui markdown file for one locale.
+// Short/Long come from optional YAML frontmatter (short_description / long_description);
+// Body is the markdown after the frontmatter. Populated by the host (daemon), not by Parse.
+// Changelog is populated from the `changelog` frontmatter list in workflow-level ui files;
+// node-level ui files leave it empty.
+type UIDoc struct {
+	Short     string           `json:"short,omitempty"`
+	Long      string           `json:"long,omitempty"`
+	Body      string           `json:"body"`
+	Changelog []ChangelogEntry `json:"changelog,omitempty"`
+}
+
 // Workflow supports both sequential steps and DAG nodes.
 // If Nodes is set, DAG execution is used. Otherwise, Steps runs sequentially.
 type Workflow struct {
@@ -19,6 +39,8 @@ type Workflow struct {
 	Description   string             `json:"description,omitempty"`
 	LibrarySource *string            `json:"_library_source,omitempty"` // repo slug injected at install time (e.g. "owner/repo")
 	LibraryRef    *string            `json:"_library_ref,omitempty"`    // resolved tag injected at install time
+	UI            string             `json:"ui,omitempty"`              // path (relative to the .sky file's dir) to a markdown file rendered into the OUTER workflow card; ignored by execution. Same resolution as the per-node ui key.
+	UIDoc         map[string]UIDoc   `json:"_ui,omitempty"`             // host-populated at load time: locale -> rendered workflow card content; never parsed from .sky source.
 	OutputStyle   string             `json:"output_style,omitempty"`    // "terse" appends a response-compression directive to every Claude prompt
 	MaxBudget     float64            `json:"max_budget_usd,omitempty"`  // aggregate USD cap across all nodes in one run
 	Claude        WorkflowClaudeOpts `json:"claude,omitempty"`          // per-workflow Claude subprocess options
@@ -142,23 +164,25 @@ type Node struct {
 
 	// Node type: exactly one execution kind may be set (command may also carry a prompt block).
 	// Loop is a modifier wrapping the body (command/bash/prompt); it co-exists with the body kind.
-	Command     string          `json:"command,omitempty"`      // reference to .sky/commands/<name>.md
-	Prompt      string          `json:"prompt,omitempty"`       // inline prompt (also supplement for command nodes)
-	Bash        string          `json:"bash,omitempty"`         // shell command
-	BashFile    string          `json:"bash_file,omitempty"`    // path to a shell script (relative to the .sky file); mutually exclusive with bash
-	HTTP        *HTTPConfig     `json:"http,omitempty"`         // outbound HTTP call
-	Eval        *EvalConfig     `json:"eval,omitempty"`         // assertion on a prior node's output
-	Loop        *LoopConfig     `json:"loop,omitempty"`         // repeat body until condition passes
-	Wait        *WaitConfig     `json:"wait,omitempty"`         // pause for human approval or webhook
-	Cancel      *CancelConfig   `json:"cancel,omitempty"`       // abort the run immediately
-	Script      *ScriptConfig   `json:"script,omitempty"`       // run inline TypeScript or Python
-	Approval    *ApprovalConfig `json:"approval,omitempty"`     // structured approval gate (extends wait)
-	Invoke      *InvokeConfig   `json:"invoke,omitempty"`       // synchronously call another .sky workflow
-	AcquireLock *LockConfig     `json:"acquire_lock,omitempty"` // acquire a named distributed lock
-	ReleaseLock *LockConfig     `json:"release_lock,omitempty"` // release a named distributed lock
-	Spawn       *SpawnConfig    `json:"spawn,omitempty"`        // run N workers in parallel and collect outputs
-	Council     *CouncilConfig  `json:"council,omitempty"`      // fan-out N read-only advisory members then synthesize
-	Review      *ReviewConfig   `json:"review,omitempty"`       // read-only code review against a base branch
+	Command     string           `json:"command,omitempty"`      // reference to .sky/commands/<name>.md
+	Prompt      string           `json:"prompt,omitempty"`       // inline prompt (also supplement for command nodes)
+	Bash        string           `json:"bash,omitempty"`         // shell command
+	BashFile    string           `json:"bash_file,omitempty"`    // path to a shell script (relative to the .sky file); mutually exclusive with bash
+	UI          string           `json:"ui,omitempty"`           // path (relative to the .sky file's dir) to a markdown file rendered into the node card by the dashboard UI; ignored by DAG execution. Extensionless = locale set (<ui>.<lang>.md); a .md value = single file (locale "default"). Mirrors bash_file.
+	UIDocs      map[string]UIDoc `json:"_ui,omitempty"`          // host-populated at load time: locale -> rendered card content; never parsed from .sky source (like _library_source).
+	HTTP        *HTTPConfig      `json:"http,omitempty"`         // outbound HTTP call
+	Eval        *EvalConfig      `json:"eval,omitempty"`         // assertion on a prior node's output
+	Loop        *LoopConfig      `json:"loop,omitempty"`         // repeat body until condition passes
+	Wait        *WaitConfig      `json:"wait,omitempty"`         // pause for human approval or webhook
+	Cancel      *CancelConfig    `json:"cancel,omitempty"`       // abort the run immediately
+	Script      *ScriptConfig    `json:"script,omitempty"`       // run inline TypeScript or Python
+	Approval    *ApprovalConfig  `json:"approval,omitempty"`     // structured approval gate (extends wait)
+	Invoke      *InvokeConfig    `json:"invoke,omitempty"`       // synchronously call another .sky workflow
+	AcquireLock *LockConfig      `json:"acquire_lock,omitempty"` // acquire a named distributed lock
+	ReleaseLock *LockConfig      `json:"release_lock,omitempty"` // release a named distributed lock
+	Spawn       *SpawnConfig     `json:"spawn,omitempty"`        // run N workers in parallel and collect outputs
+	Council     *CouncilConfig   `json:"council,omitempty"`      // fan-out N read-only advisory members then synthesize
+	Review      *ReviewConfig    `json:"review,omitempty"`       // read-only code review against a base branch
 
 	// Execution options
 	Model         string  `json:"model,omitempty"`

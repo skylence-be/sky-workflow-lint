@@ -70,6 +70,13 @@ func validate(wf *Workflow) error {
 		return err
 	}
 
+	if wf.UI != "" {
+		if filepath.IsAbs(wf.UI) || strings.Contains(wf.UI, "..") {
+			return skyerr.New(skyerr.ErrWorkflowValidation,
+				fmt.Sprintf("workflow %q: ui must be a relative path inside the repo", wf.Name))
+		}
+	}
+
 	if t := wf.Trigger.SkyEvent; t != nil {
 		if t.Event == "" {
 			return skyerr.New(skyerr.ErrWorkflowValidation,
@@ -274,6 +281,12 @@ func validate(wf *Workflow) error {
 			if filepath.IsAbs(n.MCPConfig) || strings.Contains(n.MCPConfig, "..") {
 				return skyerr.New(skyerr.ErrWorkflowValidation,
 					fmt.Sprintf("workflow %q: node %q: mcp_config must be a relative path inside the repo", wf.Name, n.ID))
+			}
+		}
+		if n.UI != "" {
+			if filepath.IsAbs(n.UI) || strings.Contains(n.UI, "..") {
+				return skyerr.New(skyerr.ErrWorkflowValidation,
+					fmt.Sprintf("workflow %q: node %q: ui must be a relative path inside the repo", wf.Name, n.ID))
 			}
 		}
 		if n.Permissions != "" && n.Permissions != "interactive" {
