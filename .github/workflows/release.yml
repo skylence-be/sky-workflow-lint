@@ -3,9 +3,15 @@ on:
   push:
     tags:
       - 'v*'
+concurrency:
+  group: builds-sky-workflow-lint
+  cancel-in-progress: false
+
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on:
+      group: builds
+      labels: [self-hosted, macOS, ARM64]
     permissions:
       contents: write
     steps:
