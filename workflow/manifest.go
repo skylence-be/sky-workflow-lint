@@ -14,6 +14,7 @@ type WorkflowManifest struct {
 	Triggers      TriggersManifest  `json:"triggers"`
 	WhenGrammar   WhenGrammar       `json:"when_grammar"`
 	Templates     TemplatesManifest `json:"templates"`
+	Params        ParamsManifest    `json:"params"`
 	LintCodes     []skyerr.LintCode `json:"lint_codes"`
 }
 
@@ -81,6 +82,14 @@ type TemplatesManifest struct {
 	Note             string   `json:"note"`
 }
 
+// ParamsManifest describes workflow input declarations under params.<name>.
+type ParamsManifest struct {
+	NameRegex       string   `json:"name_regex"`
+	Types           []string `json:"types"`
+	DeclarationKeys []string `json:"declaration_keys"`
+	Note            string   `json:"note"`
+}
+
 // Manifest returns the complete workflow language manifest for the given binary version.
 func Manifest(version string) WorkflowManifest {
 	return WorkflowManifest{
@@ -94,13 +103,19 @@ func Manifest(version string) WorkflowManifest {
 		},
 		Triggers:    triggersManifest(),
 		WhenGrammar: whenGrammar(),
+		Params: ParamsManifest{
+			NameRegex:       paramNameRe.String(),
+			Types:           []string{ParamTypeString, ParamTypeNumber, ParamTypeBoolean, ParamTypeEnum},
+			DeclarationKeys: []string{"type", "required", "default", "description", "enum"},
+			Note:            "Declare workflow inputs as params.<name>.type/required/default/description/enum in ⊕meta⊕. Undeclared {{var}} references are warning-only during rollout.",
+		},
 		Templates: TemplatesManifest{
 			PlaceholderRegex: `\{\{\s*([\w.\-]+)(?:\s*\|\s*(\w+))?\s*\}\}`,
 			Filters:          []string{"json", "urlencode"},
 			OutputRefRegex:   `\$([\w-]+)\.output((?:\.[\w-]+)*)`,
 			Note:             "{{var}} expansion available in prompt, http, and eval nodes; not in bash nodes (use $SKY_<VAR> env vars instead). {{var|json}} emits a quoted JSON value for safe embedding in JSON strings.",
 		},
-		LintCodes: skyerr.LintCodes,
+		LintCodes: workflowLintCodes(),
 	}
 }
 
