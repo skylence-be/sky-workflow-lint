@@ -17,6 +17,10 @@
       "type": "string",
       "enum": ["", "terse"]
     },
+    "params": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/paramSpec" }
+    },
     "trigger": {
       "type": "object",
       "properties": {
@@ -58,6 +62,17 @@
     }
   },
   "$defs": {
+    "paramSpec": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["string", "number", "boolean", "enum"] },
+        "required": { "type": "boolean" },
+        "default": true,
+        "description": { "type": "string" },
+        "enum": { "type": "array", "items": { "type": "string" } }
+      }
+    },
     "step": {
       "type": "object",
       "properties": {

@@ -33,26 +33,36 @@ type UIDoc struct {
 // Workflow supports both sequential steps and DAG nodes.
 // If Nodes is set, DAG execution is used. Otherwise, Steps runs sequentially.
 type Workflow struct {
-	Name          string             `json:"name"`
-	Source        SourceTier         `json:"source,omitempty"` // set by loader; identifies which tier this came from
-	Raw           string             `json:"-" yaml:"-"`       // verbatim source bytes; populated by Parse
-	Description   string             `json:"description,omitempty"`
-	LibrarySource *string            `json:"_library_source,omitempty"` // repo slug injected at install time (e.g. "owner/repo")
-	LibraryRef    *string            `json:"_library_ref,omitempty"`    // resolved tag injected at install time
-	UI            string             `json:"ui,omitempty"`              // path (relative to the .sky file's dir) to a markdown file rendered into the OUTER workflow card; ignored by execution. Same resolution as the per-node ui key.
-	UIDoc         map[string]UIDoc   `json:"_ui,omitempty"`             // host-populated at load time: locale -> rendered workflow card content; never parsed from .sky source.
-	OutputStyle   string             `json:"output_style,omitempty"`    // "terse" appends a response-compression directive to every Claude prompt
-	MaxBudget     float64            `json:"max_budget_usd,omitempty"`  // aggregate USD cap across all nodes in one run
-	Claude        WorkflowClaudeOpts `json:"claude,omitempty"`          // per-workflow Claude subprocess options
-	MCPServers    map[string]any     `json:"mcp_servers,omitempty"`     // per-workflow MCP servers; merged with managed mcp.json per run
-	Secrets       []string           `json:"secrets,omitempty"`         // env var names reachable via ${env:NAME} in mcp_servers and http nodes
-	Hooks         WorkflowHooks      `json:"hooks,omitempty"`           // per-workflow hook registrations
-	Learnings     *LearningsConfig   `json:"learnings,omitempty"`       // workflow-level learnings config; overridden per-node
-	RunDoc        bool               `json:"run_doc,omitempty"`         // generate a shared scratchpad skeleton at run start
-	Trigger       Trigger            `json:"trigger"`
-	Steps         []Step             `json:"steps,omitempty"` // Legacy sequential mode
-	Nodes         []Node             `json:"nodes,omitempty"` // DAG mode
-	Docs          []DocBlock         `json:"-"`               // doc/comment blocks; populated by Parse; not used for execution
+	Name          string               `json:"name"`
+	Source        SourceTier           `json:"source,omitempty"` // set by loader; identifies which tier this came from
+	Raw           string               `json:"-" yaml:"-"`       // verbatim source bytes; populated by Parse
+	Description   string               `json:"description,omitempty"`
+	LibrarySource *string              `json:"_library_source,omitempty"` // repo slug injected at install time (e.g. "owner/repo")
+	LibraryRef    *string              `json:"_library_ref,omitempty"`    // resolved tag injected at install time
+	UI            string               `json:"ui,omitempty"`              // path (relative to the .sky file's dir) to a markdown file rendered into the OUTER workflow card; ignored by execution. Same resolution as the per-node ui key.
+	UIDoc         map[string]UIDoc     `json:"_ui,omitempty"`             // host-populated at load time: locale -> rendered workflow card content; never parsed from .sky source.
+	OutputStyle   string               `json:"output_style,omitempty"`    // "terse" appends a response-compression directive to every Claude prompt
+	MaxBudget     float64              `json:"max_budget_usd,omitempty"`  // aggregate USD cap across all nodes in one run
+	Claude        WorkflowClaudeOpts   `json:"claude,omitempty"`          // per-workflow Claude subprocess options
+	MCPServers    map[string]any       `json:"mcp_servers,omitempty"`     // per-workflow MCP servers; merged with managed mcp.json per run
+	Secrets       []string             `json:"secrets,omitempty"`         // env var names reachable via ${env:NAME} in mcp_servers and http nodes
+	Params        map[string]ParamSpec `json:"params,omitempty"`          // declared workflow inputs, parsed from params.<name>.* keys in ⊕meta⊕
+	Hooks         WorkflowHooks        `json:"hooks,omitempty"`           // per-workflow hook registrations
+	Learnings     *LearningsConfig     `json:"learnings,omitempty"`       // workflow-level learnings config; overridden per-node
+	RunDoc        bool                 `json:"run_doc,omitempty"`         // generate a shared scratchpad skeleton at run start
+	Trigger       Trigger              `json:"trigger"`
+	Steps         []Step               `json:"steps,omitempty"` // Legacy sequential mode
+	Nodes         []Node               `json:"nodes,omitempty"` // DAG mode
+	Docs          []DocBlock           `json:"-"`               // doc/comment blocks; populated by Parse; not used for execution
+}
+
+// ParamSpec declares one typed workflow input under params.<name> in ⊕meta⊕.
+type ParamSpec struct {
+	Type        string   `json:"type"`
+	Required    bool     `json:"required,omitempty"`
+	Default     any      `json:"default,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Enum        []string `json:"enum,omitempty"`
 }
 
 // WorkflowHooks holds per-lifecycle-event hook configurations for a workflow.

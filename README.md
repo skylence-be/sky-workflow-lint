@@ -31,6 +31,24 @@ mutually exclusive. Related lint codes:
   (warning, non-blocking; does not affect the exit code). shellcheck is used when
   it is on `PATH`; its absence is silent.
 
+### Declared workflow params
+
+Workflows may declare typed run inputs in `⊕meta⊕` using `params.<name>.*` keys:
+
+```sky
+params.title.type = "string"
+params.title.required = true
+params.priority.type = "enum"
+params.priority.enum = ["low", "high"]
+params.priority.default = "low"
+```
+
+Supported types are `string`, `number`, `boolean`, and `enum`. Defaults are
+validated against the declared type. `{{var}}` references that are neither
+declared params nor known trigger-injected vars emit `SKY-WF-104` as a warning
+during rollout. Invoke nodes are cross-checked against target workflow params
+when lint runs with workflow roots.
+
 ### Examples
 
 ```sh

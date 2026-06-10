@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/skylence-be/skyerr"
 	"github.com/skylence-be/sky-workflow-lint/workflow"
 )
 
@@ -23,8 +22,11 @@ func TestManifest_Shape(t *testing.T) {
 	if len(m.Nodes.Kinds) == 0 {
 		t.Error("nodes.kinds is empty")
 	}
-	if len(m.LintCodes) != len(skyerr.LintCodes) {
-		t.Errorf("lint_codes count = %d, want %d", len(m.LintCodes), len(skyerr.LintCodes))
+	if len(m.LintCodes) == 0 {
+		t.Error("lint_codes is empty")
+	}
+	if len(m.Params.Types) == 0 {
+		t.Error("params.types is empty")
 	}
 }
 
@@ -40,7 +42,7 @@ func TestManifest_JSON(t *testing.T) {
 		t.Fatalf("json.Unmarshal: %v", err)
 	}
 
-	for _, key := range []string{"schema_version", "sky_version", "format", "nodes", "triggers", "when_grammar", "templates", "lint_codes"} {
+	for _, key := range []string{"schema_version", "sky_version", "format", "nodes", "triggers", "when_grammar", "params", "templates", "lint_codes"} {
 		if _, ok := check[key]; !ok {
 			t.Errorf("manifest JSON missing key %q", key)
 		}

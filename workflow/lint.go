@@ -56,9 +56,9 @@ func LintWithRoots(path string, roots Roots) ([]Diagnostic, error) {
 		return nil, err
 	}
 	diags := LintBytes(path, raw)
-	if len(diags) > 0 {
+	if hasBlockingDiagnostics(diags) {
 		// If base lint already failed, skip tier-dependent checks; the workflow
-		// may not have parsed cleanly.
+		// may not have parsed cleanly. Warning-only findings still allow cross-file checks.
 		return diags, nil
 	}
 
@@ -72,6 +72,15 @@ func LintWithRoots(path string, roots Roots) ([]Diagnostic, error) {
 		diags = append(diags, Diagnostic{File: path, Code: string(si.Code), Message: FormatSchemaIssue(si)})
 	}
 	return diags, nil
+}
+
+func hasBlockingDiagnostics(diags []Diagnostic) bool {
+	for _, d := range diags {
+		if d.Severity != "warning" {
+			return true
+		}
+	}
+	return false
 }
 
 // LintBytes validates raw .sky file content and returns diagnostics.
@@ -167,6 +176,9 @@ func LintBytes(path string, raw []byte) []Diagnostic { //nolint:funlen // sequen
 	}
 	for _, si := range validateInvokeBasic(wf) {
 		diags = append(diags, Diagnostic{File: path, Code: string(si.Code), Message: FormatSchemaIssue(si)})
+	}
+	for _, d := range ValidateTemplateParams(wf) {
+		diags = append(diags, Diagnostic{File: path, Code: d.Code, Message: d.Message, Severity: d.Severity})
 	}
 	if gh := wf.Trigger.GitHub; gh != nil && gh.CheckRun != nil {
 		validConclusions := map[string]bool{
@@ -346,13 +358,16 @@ func validateInvoke(wf *Workflow, roots Roots) []SchemaIssue {
 		if n.Invoke.Target == wf.Name {
 			continue // skip self (already reported)
 		}
-		if _, err := Resolve(n.Invoke.Target, roots); err != nil {
+		target, err := Resolve(n.Invoke.Target, roots)
+		if err != nil {
 			issues = append(issues, SchemaIssue{
 				NodeID:  n.ID,
 				Message: fmt.Sprintf("node %q: invoke.target %q not found in any workflow tier", n.ID, n.Invoke.Target),
 				Code:    skyerr.ErrInvokeTargetNotFound,
 			})
+			continue
 		}
+		issues = append(issues, validateInvokeParams(n, target)...)
 	}
 	return issues
 }

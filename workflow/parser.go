@@ -62,6 +62,10 @@ func validate(wf *Workflow) error {
 			fmt.Sprintf("workflow %q: invalid output_style %q (valid: terse)", wf.Name, wf.OutputStyle))
 	}
 
+	if err := ValidateParams(wf); err != nil {
+		return err
+	}
+
 	if err := validateMCPServers(wf.Name, wf.MCPServers); err != nil {
 		return err
 	}
