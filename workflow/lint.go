@@ -208,7 +208,7 @@ func LintBytes(path string, raw []byte) []Diagnostic { //nolint:funlen // sequen
 	return diags
 }
 
-// validateSourceTriggers checks that sentry, linear, and jira triggers have at least
+// validateSourceTriggers checks that sentry, linear, jira, and gitlab triggers have at least
 // one event listed (SKY-WF-095).
 func validateSourceTriggers(wf *Workflow) []SchemaIssue {
 	var issues []SchemaIssue
@@ -227,6 +227,12 @@ func validateSourceTriggers(wf *Workflow) []SchemaIssue {
 	if wf.Trigger.Jira != nil && len(wf.Trigger.Jira.Events) == 0 {
 		issues = append(issues, SchemaIssue{
 			Message: "trigger.jira.events must not be empty",
+			Code:    skyerr.ErrSourceTriggerEventsEmpty,
+		})
+	}
+	if wf.Trigger.GitLab != nil && len(wf.Trigger.GitLab.Events) == 0 {
+		issues = append(issues, SchemaIssue{
+			Message: "trigger.gitlab.events must not be empty",
 			Code:    skyerr.ErrSourceTriggerEventsEmpty,
 		})
 	}
