@@ -94,6 +94,7 @@ type Trigger struct {
 	Sentry   *SourceTrigger   `json:"sentry,omitempty"`
 	Linear   *SourceTrigger   `json:"linear,omitempty"`
 	Jira     *SourceTrigger   `json:"jira,omitempty"`
+	GitLab   *SourceTrigger   `json:"gitlab,omitempty"`
 	Schedule *ScheduleTrigger `json:"schedule,omitempty"`
 }
 
@@ -104,7 +105,7 @@ type ScheduleTrigger struct {
 }
 
 // SourceTrigger is a generic event-list trigger used by third-party sources
-// (e.g. Sentry, Linear) that do not require GitHub-specific fields.
+// (e.g. Sentry, Linear, Jira, GitLab) that do not require GitHub-specific fields.
 type SourceTrigger struct {
 	Events []string `json:"events"`
 }
