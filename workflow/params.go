@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	CodeParamInvalid       skyerr.Code = "SKY-WF-103"
-	CodeTemplateUndeclared skyerr.Code = "SKY-WF-104"
-	CodeInvokeParamMissing skyerr.Code = "SKY-WF-105"
-	CodeInvokeParamType    skyerr.Code = "SKY-WF-106"
+	CodeParamInvalid       skyerr.Code = "SKY-WF-107"
+	CodeTemplateUndeclared skyerr.Code = "SKY-WF-108"
+	CodeInvokeParamMissing skyerr.Code = "SKY-WF-109"
+	CodeInvokeParamType    skyerr.Code = "SKY-WF-110"
 )
 
 const (
