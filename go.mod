@@ -6,9 +6,7 @@ require github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 
 require (
 	github.com/robfig/cron/v3 v3.0.1
-	github.com/skylence-be/skyerr v0.1.0
+	github.com/skylence-be/skyerr v0.1.1
 )
 
 require mvdan.cc/sh/v3 v3.13.1
-
-replace github.com/skylence-be/skyerr => ../skyerr
