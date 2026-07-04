@@ -105,6 +105,7 @@
         "http": { "$ref": "#/$defs/httpConfig" },
         "eval": { "$ref": "#/$defs/evalConfig" },
         "loop": { "$ref": "#/$defs/loopConfig" },
+        "foreach": { "$ref": "#/$defs/foreachConfig" },
         "wait": { "$ref": "#/$defs/waitConfig" },
         "approval": { "$ref": "#/$defs/approvalConfig" },
         "invoke": { "$ref": "#/$defs/invokeConfig" },
@@ -176,6 +177,19 @@
         },
         "max": { "type": "integer", "minimum": 0 },
         "idle_timeout_ms": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "foreachConfig": {
+      "type": "object",
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "anyOf": [
+            { "type": "array", "items": { "type": "string" } },
+            { "type": "string" }
+          ]
+        },
+        "max_concurrency": { "type": "integer", "minimum": 0, "maximum": 32 }
       }
     },
     "waitConfig": {
