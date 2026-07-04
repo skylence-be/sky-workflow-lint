@@ -1,25 +1,31 @@
 name: Release
 on:
   workflow_dispatch:
+
+permissions:
+  contents: read
+
 concurrency:
-  group: builds-sky-workflow-lint
+  group: builds-workflow-lint
   cancel-in-progress: false
 
 jobs:
   release:
-    runs-on:
-      group: builds
-      labels: [self-hosted, macOS, ARM64]
+    # Free-plan org: no runner groups — select by labels only.
+    runs-on: [self-hosted, macOS, ARM64, heavy]
+    timeout-minutes: 30
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
           go-version-file: go.mod
-      - uses: goreleaser/goreleaser-action@v6
+          # Persistent self-hosted runner: local GOCACHE beats the cache API.
+          cache: false
+      - uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
         with:
           version: latest
           args: release --clean
