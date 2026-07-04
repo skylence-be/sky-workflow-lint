@@ -10,3 +10,5 @@ require (
 )
 
 require mvdan.cc/sh/v3 v3.13.1
+
+replace github.com/skylence-be/skyerr => ../skyerr

@@ -184,6 +184,7 @@ type Node struct {
 	HTTP        *HTTPConfig      `json:"http,omitempty"`         // outbound HTTP call
 	Eval        *EvalConfig      `json:"eval,omitempty"`         // assertion on a prior node's output
 	Loop        *LoopConfig      `json:"loop,omitempty"`         // repeat body until condition passes
+	Foreach     *ForeachConfig   `json:"foreach,omitempty"`      // fan the body out over items resolved at run time
 	Wait        *WaitConfig      `json:"wait,omitempty"`         // pause for human approval or webhook
 	Cancel      *CancelConfig    `json:"cancel,omitempty"`       // abort the run immediately
 	Script      *ScriptConfig    `json:"script,omitempty"`       // run inline TypeScript or Python
@@ -364,6 +365,16 @@ type LoopCondition struct {
 	Eval *EvalConfig `json:"eval,omitempty"`
 }
 
+// ForeachConfig fans a node body out over a list of items resolved at run
+// time. Items is either a []string literal or a string containing a
+// $node.output[.field] / {{var}} reference that resolves to a JSON array
+// (fallback: non-empty lines). MaxConcurrency bounds parallel items;
+// 0 means the default of 1 (sequential).
+type ForeachConfig struct {
+	Items          any `json:"items"`
+	MaxConcurrency int `json:"max_concurrency,omitempty"`
+}
+
 // WaitConfig pauses the run until a resume signal arrives or timeout expires.
 type WaitConfig struct {
 	Prompt    string   `json:"prompt,omitempty"`    // message shown to approver
@@ -383,6 +394,8 @@ func (n *Node) NodeType() string {
 		return "approval"
 	case n.Loop != nil:
 		return "loop"
+	case n.Foreach != nil:
+		return "foreach"
 	case n.Wait != nil:
 		return "wait"
 	case n.Invoke != nil:

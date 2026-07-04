@@ -32,6 +32,15 @@ func Parse(r io.Reader) (*Workflow, error) {
 // clamped at runtime as defense-in-depth.
 const MaxLoopIterations = 100
 
+// MaxForeachItems is the hard cap on a literal foreach.items array. The parser
+// can only cap literal arrays at parse time; when items resolves to a
+// $node.output reference at run time, the runner enforces this same cap
+// after resolution.
+const MaxForeachItems = 100
+
+// MaxForeachConcurrency is the hard cap on foreach.max_concurrency.
+const MaxForeachConcurrency = 32
+
 // MaxWorkflowNodes caps the total node count per workflow. The executor spawns a
 // goroutine per node at parse time; the cap keeps the model predictable and turns
 // accidental fan-outs into an explicit parse error. Authors who need more can
@@ -120,9 +129,18 @@ func validate(wf *Workflow) error {
 		}
 		ids[n.ID] = true
 
-		// Loop wraps a body action — validate body + until, then skip generic kind checks.
+		// Loop and Foreach are mutually exclusive modifiers; each wraps a body
+		// action and validates it + its own config, skipping generic kind checks.
+		if n.Loop != nil && n.Foreach != nil {
+			return skyerr.New(skyerr.ErrForeachBodyInvalid,
+				fmt.Sprintf("workflow %q: node %q: foreach body cannot be loop", wf.Name, n.ID))
+		}
 		if n.Loop != nil {
 			if err := validateLoopNode(wf.Name, n.ID, &n); err != nil {
+				return err
+			}
+		} else if n.Foreach != nil {
+			if err := validateForeachNode(wf.Name, n.ID, &n); err != nil {
 				return err
 			}
 		} else {
@@ -352,6 +370,10 @@ func validate(wf *Workflow) error {
 		if n.ChainFrom != "" {
 			// chain_from only valid on prompt/command nodes (the ones that run Claude)
 			nt := n.NodeType()
+			if nt == "foreach" {
+				return skyerr.New(skyerr.ErrForeachChainInvalid,
+					fmt.Sprintf("workflow %q: node %q: chain_from may not be set on a foreach node", wf.Name, n.ID))
+			}
 			if nt != "prompt" && nt != "command" {
 				return skyerr.New(skyerr.ErrChainFromInvalid,
 					fmt.Sprintf("workflow %q: node %q: chain_from only valid on prompt/command nodes, not %q", wf.Name, n.ID, nt))
@@ -370,7 +392,10 @@ func validate(wf *Workflow) error {
 			}
 			// chain_from target must itself be a prompt/command node (produces a Claude session)
 			depNode := nodeMap[n.ChainFrom]
-			if dt := depNode.NodeType(); dt != "prompt" && dt != "command" {
+			if dt := depNode.NodeType(); dt == "foreach" {
+				return skyerr.New(skyerr.ErrForeachChainInvalid,
+					fmt.Sprintf("workflow %q: node %q: chain_from %q targets a foreach node — not supported", wf.Name, n.ID, n.ChainFrom))
+			} else if dt != "prompt" && dt != "command" {
 				return skyerr.New(skyerr.ErrChainFromTargetInvalid,
 					fmt.Sprintf("workflow %q: node %q: chain_from %q is a %q node — only prompt/command nodes produce sessions", wf.Name, n.ID, n.ChainFrom, dt))
 			}
@@ -462,6 +487,87 @@ func validateLoopNode(wfName, nodeID string, n *Node) error {
 			return skyerr.New(skyerr.ErrLoopIdleTimeoutInvalid,
 				fmt.Sprintf("workflow %q: node %q: loop.idle_timeout_ms only applies to bash bodies; use loop.max for prompt/command bodies", wfName, nodeID))
 		}
+	}
+	return nil
+}
+
+func validateForeachNode(wfName, nodeID string, n *Node) error {
+	if err := validateForeachConfig(wfName, nodeID, n.Foreach); err != nil {
+		return err
+	}
+
+	// Body: exactly one of prompt/command, bash/bash_file, or script. loop is
+	// checked by the caller; http, eval, wait, cancel, approval, invoke,
+	// acquire_lock, release_lock, spawn, council, and review are not valid
+	// foreach bodies.
+	if n.HTTP != nil || n.Eval != nil || n.Wait != nil || n.Cancel != nil || n.Approval != nil || n.Invoke != nil || n.AcquireLock != nil || n.ReleaseLock != nil || n.Spawn != nil || n.Council != nil || n.Review != nil {
+		return skyerr.New(skyerr.ErrForeachBodyInvalid,
+			fmt.Sprintf("workflow %q: node %q: foreach body cannot be http, eval, wait, cancel, approval, invoke, acquire_lock, release_lock, spawn, council, or review", wfName, nodeID))
+	}
+	hasBash := n.Bash != "" || n.BashFile != ""
+	hasClaude := n.Command != "" || n.Prompt != ""
+	hasScript := n.Script != nil
+	bodyKinds := 0
+	if hasBash {
+		bodyKinds++
+	}
+	if hasClaude {
+		bodyKinds++
+	}
+	if hasScript {
+		bodyKinds++
+	}
+	if bodyKinds == 0 {
+		return skyerr.New(skyerr.ErrForeachBodyInvalid,
+			fmt.Sprintf("workflow %q: node %q: foreach requires a body (command, bash, bash_file, prompt, or script)", wfName, nodeID))
+	}
+	if bodyKinds > 1 {
+		return skyerr.New(skyerr.ErrForeachBodyInvalid,
+			fmt.Sprintf("workflow %q: node %q: foreach body must be exactly one of command/prompt, bash/bash_file, or script", wfName, nodeID))
+	}
+	if n.Bash != "" && n.BashFile != "" {
+		return skyerr.New(skyerr.ErrForeachBodyInvalid,
+			fmt.Sprintf("workflow %q: node %q: bash and bash_file are mutually exclusive", wfName, nodeID))
+	}
+	return nil
+}
+
+// validateForeachConfig checks foreach.items and foreach.max_concurrency.
+// Items is either a non-empty []string literal (capped at MaxForeachItems)
+// or a non-empty string reference resolved at run time.
+func validateForeachConfig(wfName, nodeID string, cfg *ForeachConfig) error {
+	switch items := cfg.Items.(type) {
+	case nil:
+		return skyerr.New(skyerr.ErrForeachItemsInvalid,
+			fmt.Sprintf("workflow %q: node %q: foreach.items is required", wfName, nodeID))
+	case []any:
+		if len(items) == 0 {
+			return skyerr.New(skyerr.ErrForeachItemsInvalid,
+				fmt.Sprintf("workflow %q: node %q: foreach.items array must not be empty", wfName, nodeID))
+		}
+		if len(items) > MaxForeachItems {
+			return skyerr.New(skyerr.ErrForeachItemsInvalid,
+				fmt.Sprintf("workflow %q: node %q: foreach.items has %d entries, exceeds cap of %d", wfName, nodeID, len(items), MaxForeachItems))
+		}
+		for i, item := range items {
+			if _, ok := item.(string); !ok {
+				return skyerr.New(skyerr.ErrForeachItemsInvalid,
+					fmt.Sprintf("workflow %q: node %q: foreach.items[%d] must be a string", wfName, nodeID, i))
+			}
+		}
+	case string:
+		if strings.TrimSpace(items) == "" {
+			return skyerr.New(skyerr.ErrForeachItemsInvalid,
+				fmt.Sprintf("workflow %q: node %q: foreach.items must not be empty", wfName, nodeID))
+		}
+	default:
+		return skyerr.New(skyerr.ErrForeachItemsInvalid,
+			fmt.Sprintf("workflow %q: node %q: foreach.items must be an array of strings or a string reference", wfName, nodeID))
+	}
+
+	if cfg.MaxConcurrency < 0 || cfg.MaxConcurrency > MaxForeachConcurrency {
+		return skyerr.New(skyerr.ErrForeachConcurrencyInvalid,
+			fmt.Sprintf("workflow %q: node %q: foreach.max_concurrency %d must be 0–%d (0 = default of 1)", wfName, nodeID, cfg.MaxConcurrency, MaxForeachConcurrency))
 	}
 	return nil
 }
