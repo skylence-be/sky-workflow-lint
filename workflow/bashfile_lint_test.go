@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 // writeBashFileFixture writes content as <dir>/<name>.sky and returns the dir and

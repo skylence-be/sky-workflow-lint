@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 //go:embed schemas/workflow.schema.json

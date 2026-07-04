@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 // ValidLearningCategories is the authoritative list accepted by the loader, linter, and CLI.

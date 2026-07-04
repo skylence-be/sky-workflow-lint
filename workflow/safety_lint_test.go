@@ -3,7 +3,7 @@ package workflow
 import (
 	"testing"
 
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 func TestValidateSafetyClass(t *testing.T) {

@@ -1,7 +1,7 @@
 package workflow
 
 import (
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 // WorkflowManifest is the machine-readable surface description of the .sky workflow language.

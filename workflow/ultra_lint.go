@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 var ultraKeywordRe = regexp.MustCompile(`(?i)\b(ultraplan|ultrareview)\b`)
