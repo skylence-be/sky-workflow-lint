@@ -5,6 +5,10 @@ trigger.github.events = ["issues.labeled"]
 trigger.github.label = "sky-spec"
 output_style = "terse"
 ⊕⊕
+※plan※
+Opus, max effort: reads the labeled spec issue and produces a structured implementation plan without touching code. On a reject-and-revise retry, the reviewer's feedback is injected via {{reject_reason}}.
+※※
+
 
 §plan§
 model = "opus"
@@ -29,10 +33,18 @@ Produce a structured plan:
 Do not implement yet — plan only.
 ∆∆
 
+※approve-plan※
+Human approval gate on the plan. Rejecting sends the reviewer's feedback back to plan for another attempt, up to 3 retries.
+※※
+
 §approve-plan§
 approval = {"prompt": "Review the implementation plan for: {{issue.title}}. Approve to proceed to implementation, or reject with specific feedback to revise the plan.", "capture_response": true, "on_reject": {"prompt_node": "plan", "max_attempts": 3}}
 depends_on = ["plan"]
 §§
+
+※implement※
+Opus, max effort, worktree isolation: implements the approved plan and pushes a branch. Carries forward the plan and its reviewer notes, plus {{reject_reason}} on a retry.
+※※
 
 §implement§
 model = "opus"
@@ -59,10 +71,18 @@ Instructions:
 - Push the branch: `git push -u origin HEAD`.
 ∆∆
 
+※approve-impl※
+Human approval gate on the implementation. Rejecting sends the reviewer's feedback back to implement for another attempt, up to 2 retries.
+※※
+
 §approve-impl§
 approval = {"prompt": "Review the implementation for: {{issue.title}}. Approve to open a PR, or reject with feedback on what to revise.", "capture_response": true, "on_reject": {"prompt_node": "implement", "max_attempts": 2}}
 depends_on = ["implement"]
 §§
+
+※create-pr※
+Sonnet: once approved, opens a draft PR summarizing the plan, the implementation, and reviewer notes from both gates.
+※※
 
 §create-pr§
 model = "sonnet"

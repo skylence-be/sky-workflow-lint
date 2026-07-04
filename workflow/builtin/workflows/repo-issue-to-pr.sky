@@ -5,6 +5,10 @@ trigger.github.events = ["issues.labeled"]
 trigger.github.label = "ready-for-sky"
 output_style = "terse"
 ⊕⊕
+※implement※
+Opus, max effort, worktree isolation: implements the labeled GitHub issue end to end and pushes a branch. On a reject-and-revise retry, the reviewer's feedback is injected via {{reject_reason}}.
+※※
+
 
 §implement§
 model = "opus"
@@ -26,10 +30,18 @@ Instructions:
 - Push the branch: `git push -u origin HEAD`.
 ∆∆
 
+※approve-fix※
+Human approval gate on the implementation. Rejecting sends the reviewer's feedback back to implement for another attempt, up to 2 retries.
+※※
+
 §approve-fix§
 approval = {"prompt": "Review the implementation for issue #{{issue.number}}. Approve to open a PR, or reject with feedback on what to revise.", "capture_response": true, "on_reject": {"prompt_node": "implement", "max_attempts": 2}}
 depends_on = ["implement"]
 §§
+
+※create-pr※
+Sonnet: once approved, opens a draft PR referencing the source issue, filling in the repo's PR template when one exists.
+※※
 
 §create-pr§
 model = "sonnet"
