@@ -11,7 +11,7 @@ import (
 	"time"
 
 	cron "github.com/robfig/cron/v3"
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 // Diagnostic is a single linting finding from Lint.

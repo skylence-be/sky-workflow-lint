@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 // The .sky format uses four Unicode delimiters, each with a distinct role:

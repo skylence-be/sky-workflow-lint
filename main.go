@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/skylence-be/sky-workflow-lint/lintfmt"
-	"github.com/skylence-be/sky-workflow-lint/workflow"
+	"github.com/skyway-harness-builder/workflow-lint/lintfmt"
+	"github.com/skyway-harness-builder/workflow-lint/workflow"
 )
 
 // version is set at build time via -ldflags "-X main.version=<tag>".

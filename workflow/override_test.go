@@ -3,7 +3,7 @@ package workflow_test
 import (
 	"testing"
 
-	"github.com/skylence-be/sky-workflow-lint/workflow"
+	"github.com/skyway-harness-builder/workflow-lint/workflow"
 )
 
 func baseWF() *workflow.Workflow {

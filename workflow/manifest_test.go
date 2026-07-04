@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/skylence-be/sky-workflow-lint/workflow"
+	"github.com/skyway-harness-builder/workflow-lint/workflow"
 )
 
 func TestManifest_Shape(t *testing.T) {

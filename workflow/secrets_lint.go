@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 var secretLintRe = regexp.MustCompile(`\$\{(\w+):([^}]*)\}`)

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/skylence-be/skyerr"
+	"github.com/skyway-harness-builder/skyerr"
 )
 
 func Parse(r io.Reader) (*Workflow, error) {
