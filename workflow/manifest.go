@@ -157,6 +157,7 @@ func nodeCommonKeys() map[string]string {
 		"output_format":  "object: JSON schema for structured output",
 		"emit":           "object|string: sky event to emit on successful completion",
 		"safety":         "string: requires_permission suppresses SKY-WF-063",
+		"runner":         "string: claude (default) or skylence: which CLI executes this node",
 	}
 }
 

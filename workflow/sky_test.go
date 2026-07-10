@@ -2047,6 +2047,65 @@ prompt = "do something"
 	}
 }
 
+func TestParse_NodeRunner_AbsentDefaultsToClaude(t *testing.T) {
+	input := `⊕meta⊕
+name = "t"
+trigger.github.events = ["a"]
+⊕⊕
+
+§n§
+prompt = "do something"
+§§
+`
+	wf, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if wf.Nodes[0].Runner != "" {
+		t.Errorf("runner = %q, want empty (absent means claude)", wf.Nodes[0].Runner)
+	}
+}
+
+func TestParse_NodeRunner_AcceptsSkylence(t *testing.T) {
+	input := `⊕meta⊕
+name = "t"
+trigger.github.events = ["a"]
+⊕⊕
+
+§n§
+prompt = "do something"
+runner = "skylence"
+§§
+`
+	wf, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if wf.Nodes[0].Runner != "skylence" {
+		t.Errorf("runner = %q, want skylence", wf.Nodes[0].Runner)
+	}
+}
+
+func TestParse_NodeRunner_RejectsUnknownValue(t *testing.T) {
+	input := `⊕meta⊕
+name = "t"
+trigger.github.events = ["a"]
+⊕⊕
+
+§n§
+prompt = "do something"
+runner = "gpt5cli"
+§§
+`
+	_, err := Parse(strings.NewReader(input))
+	if err == nil {
+		t.Fatal("expected validation error, got nil")
+	}
+	if !strings.Contains(err.Error(), "SKY-WF-070") {
+		t.Errorf("error = %v, want SKY-WF-070", err)
+	}
+}
+
 func TestParse_DocBlock_Ignored(t *testing.T) {
 	input := `⊕meta⊕
 name = "t"
