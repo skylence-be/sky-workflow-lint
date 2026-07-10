@@ -200,6 +200,7 @@ type Node struct {
 	Model         string  `json:"model,omitempty"`
 	Effort        string  `json:"effort,omitempty"`
 	Isolation     string  `json:"isolation,omitempty"`
+	Runner        string  `json:"runner,omitempty"` // "claude" (default, absent) or "skylence": which CLI executes this node
 	KeepBranch    bool    `json:"keep_branch,omitempty"`
 	MaxBudget     float64 `json:"max_budget_usd,omitempty"`
 	MaxTurns      int     `json:"max_turns,omitempty"`
