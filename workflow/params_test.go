@@ -102,6 +102,42 @@ prompt = "{{issue.number}} {{repo.full_name}} {{sender.login}}"
 	}
 }
 
+func TestTemplateParamAllowsForeachItemVars(t *testing.T) {
+	input := `⊕meta⊕
+name = "fe"
+⊕⊕
+
+§list§
+bash = "echo '[\"a\",\"b\"]'"
+§§
+
+§work§
+depends_on = ["list"]
+foreach = {"items": "$list.output", "max_concurrency": 2}
+prompt = "process {{item}} ({{item_index}}/{{item_total}})"
+§§
+`
+	diags := LintBytes("fe.sky", []byte(input))
+	if hasCode(diags, string(CodeTemplateUndeclared)) {
+		t.Fatalf("foreach item vars should not warn as undeclared: %+v", diags)
+	}
+}
+
+func TestTemplateParamItemVarWarnsWithoutForeach(t *testing.T) {
+	input := `⊕meta⊕
+name = "noreach"
+⊕⊕
+
+§run§
+prompt = "process {{item}}"
+§§
+`
+	diags := LintBytes("noreach.sky", []byte(input))
+	if !hasCode(diags, string(CodeTemplateUndeclared)) {
+		t.Fatalf("item used outside a foreach should still warn: %+v", diags)
+	}
+}
+
 func TestInvokeParamsCrossCheck(t *testing.T) {
 	root := t.TempDir()
 	workflowDir := filepath.Join(root, "workflows")
