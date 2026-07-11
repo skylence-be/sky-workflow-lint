@@ -105,10 +105,11 @@ func ValidateTemplateParams(wf *Workflow) []Diagnostic {
 		declared[name] = true
 	}
 	allowed := triggerVarAllowlist(wf)
+	foreachAllowed := foreachVarAllowlist(wf)
 	seen := map[string]bool{}
 	var out []Diagnostic
 	for _, ref := range collectTemplateRefs(wf) {
-		if declared[ref] || allowed(ref) || seen[ref] {
+		if declared[ref] || allowed(ref) || foreachAllowed(ref) || seen[ref] {
 			continue
 		}
 		seen[ref] = true
@@ -119,6 +120,25 @@ func ValidateTemplateParams(wf *Workflow) []Diagnostic {
 		})
 	}
 	return out
+}
+
+// foreachVarAllowlist allows the item/item_index/item_total variables the
+// runner injects into a foreach body when the workflow has any foreach node.
+// Without this, {{item}} in a foreach body is flagged SKY-WF-108 even though it
+// resolves at run time.
+func foreachVarAllowlist(wf *Workflow) func(string) bool {
+	hasForeach := false
+	for _, n := range wf.Nodes {
+		if n.Foreach != nil {
+			hasForeach = true
+			break
+		}
+	}
+	if !hasForeach {
+		return func(string) bool { return false }
+	}
+	vars := map[string]bool{"item": true, "item_index": true, "item_total": true}
+	return func(name string) bool { return vars[name] }
 }
 
 func collectTemplateRefs(wf *Workflow) []string {
