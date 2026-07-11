@@ -281,6 +281,7 @@ func workflowLintCodes() []skyerr.LintCode {
 		{Code: string(CodeTemplateUndeclared), Description: "{{var}} reference is neither declared in params nor trigger-injected"},
 		{Code: string(CodeInvokeParamMissing), Description: "invoke.vars do not satisfy target workflow params"},
 		{Code: string(CodeInvokeParamType), Description: "invoke.vars value does not match target workflow param type"},
+		{Code: string(CodeRunnerInvalid), Description: "node.runner has an unsupported value (valid: claude, skylence)"},
 	} {
 		if !seen[c.Code] {
 			codes = append(codes, c)

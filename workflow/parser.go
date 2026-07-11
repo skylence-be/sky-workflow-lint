@@ -47,6 +47,12 @@ const MaxForeachConcurrency = 32
 // raise the constant with a code change — there is no runtime knob on purpose.
 const MaxWorkflowNodes = 256
 
+// CodeRunnerInvalid is a workflow-lint-local diagnostic/error code (not yet
+// promoted to the skyerr canonical list; see params.go for the established
+// convention of workflow-lint-local SKY-WF-* codes) for an unsupported
+// node.runner value.
+const CodeRunnerInvalid skyerr.Code = "SKY-WF-070"
+
 func validate(wf *Workflow) error {
 	if wf.Name == "" {
 		return skyerr.New(skyerr.ErrWorkflowValidation, "workflow: name is required")
@@ -278,6 +284,10 @@ func validate(wf *Workflow) error {
 		if n.Context == "fresh" && n.ChainFrom != "" {
 			return skyerr.New(skyerr.ErrWorkflowValidation,
 				fmt.Sprintf("workflow %q: node %q: context=fresh is incompatible with chain_from", wf.Name, n.ID))
+		}
+		if n.Runner != "" && n.Runner != "claude" && n.Runner != "skylence" {
+			return skyerr.New(CodeRunnerInvalid,
+				fmt.Sprintf("workflow %q: node %q: runner %q is not a valid value (valid: claude, skylence)", wf.Name, n.ID, n.Runner))
 		}
 		if n.Thinking != nil {
 			if err := validateThinkingConfig(wf.Name, n.ID, n.Thinking); err != nil {
