@@ -12,7 +12,11 @@ import (
 // version shadows lower-tier entries. Non-existent tier directories are
 // silently skipped. Builtin workflows are the HOST's concern: skyway ships
 // them in its embedded library and appends them as the lowest tier.
-func LoadAllFromRoots(roots Roots) ([]*Workflow, error) {
+//
+// Passing WithAllowedSources restricts the result to workflows whose library
+// source is in the given set. With no options the behavior is unchanged.
+func LoadAllFromRoots(roots Roots, opts ...LoadOption) ([]*Workflow, error) {
+	o := buildLoadOptions(opts)
 	seen := make(map[string]bool)
 	var out []*Workflow
 	for _, t := range roots.ordered() {
@@ -27,6 +31,12 @@ func LoadAllFromRoots(roots Roots) ([]*Workflow, error) {
 			if seen[wf.Name] {
 				continue
 			}
+			if !o.allow(wf) {
+				// Not a candidate under the active source filter. A lower
+				// tier with the same name may still qualify, so it is not
+				// marked seen here.
+				continue
+			}
 			seen[wf.Name] = true
 			out = append(out, wf)
 		}
@@ -34,9 +44,12 @@ func LoadAllFromRoots(roots Roots) ([]*Workflow, error) {
 	return out, nil
 }
 
-// Resolve finds the first workflow matching name across tiers (Repo → Workspace → User).
-// Returns an error if the workflow is not found in any tier.
-func Resolve(name string, roots Roots) (*Workflow, error) {
+// Resolve finds the first workflow matching name across tiers (Repo, then
+// Workspace, then User). Returns an error if the workflow is not found in any
+// tier. Passing WithAllowedSources skips workflows whose library source is not
+// in the given set, so the first in-set match by name is returned.
+func Resolve(name string, roots Roots, opts ...LoadOption) (*Workflow, error) {
+	o := buildLoadOptions(opts)
 	for _, t := range roots.ordered() {
 		if t.path == "" {
 			continue
@@ -46,7 +59,7 @@ func Resolve(name string, roots Roots) (*Workflow, error) {
 			return nil, err
 		}
 		for _, wf := range wfs {
-			if wf.Name == name {
+			if wf.Name == name && o.allow(wf) {
 				return wf, nil
 			}
 		}
