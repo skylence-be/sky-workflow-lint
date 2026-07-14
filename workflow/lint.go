@@ -20,8 +20,8 @@ type Diagnostic struct {
 	Line    int    // 0 means file-level
 	Code    string // e.g. skyerr code string like "SKY-WF-001"
 	Message string
-	// Severity is "warning" for non-blocking findings (callers should not flip
-	// the exit code) and "" (treated as error) for blocking findings.
+	// Severity is "warning" or "info" for non-blocking findings (callers should
+	// not flip the exit code) and "" (treated as error) for blocking findings.
 	Severity string
 }
 
@@ -76,7 +76,7 @@ func LintWithRoots(path string, roots Roots) ([]Diagnostic, error) {
 
 func hasBlockingDiagnostics(diags []Diagnostic) bool {
 	for _, d := range diags {
-		if d.Severity != "warning" {
+		if !isNonBlockingSeverity(d.Severity) {
 			return true
 		}
 	}
@@ -216,6 +216,9 @@ func LintBytes(path string, raw []byte) []Diagnostic { //nolint:funlen // sequen
 	}
 	for _, d := range lintDocBlocks(wf) {
 		diags = append(diags, Diagnostic{File: path, Code: d.Code, Message: d.Message, Severity: d.Severity, Line: d.Line})
+	}
+	for _, d := range ValidateTransportLint(wf, path) {
+		diags = append(diags, Diagnostic{File: path, Code: d.Code, Message: d.Message, Severity: d.Severity})
 	}
 	return diags
 }

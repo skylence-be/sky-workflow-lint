@@ -49,7 +49,7 @@ type LintDiagnostic struct {
 	Message string `json:"message"`
 	Rule    string `json:"rule,omitempty"`
 	Tier    string `json:"tier,omitempty"`
-	// Severity is "warning" for non-blocking findings; "" is treated as "error".
+	// Severity is "warning" or "info" for non-blocking findings; "" is treated as "error".
 	Severity string `json:"severity,omitempty"`
 }
 
@@ -131,8 +131,11 @@ func LintSARIF(diags []LintDiagnostic, repoRoot string) sarifLog {
 		}
 
 		level := "error"
-		if d.Severity == "warning" {
+		switch d.Severity {
+		case "warning":
 			level = "warning"
+		case "info":
+			level = "note"
 		}
 		res := sarifResult{
 			RuleID:  d.Rule,
