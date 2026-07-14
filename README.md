@@ -31,6 +31,19 @@ mutually exclusive. Related lint codes:
   (warning, non-blocking; does not affect the exit code). shellcheck is used when
   it is on `PATH`; its absence is silent.
 
+### Bash transport (curl / retry)
+
+Semantic rules for outbound HTTP in bash nodes (inline `bash` or resolved
+`bash_file` script body):
+
+- `SKY-WF-111` — `curl` without `--fail` or `-f` (warning).
+- `SKY-WF-112` — `curl` without `--max-time` (warning).
+- `SKY-WF-113` — `retry` on a sink-like node id/script (`send`, `post`,
+  `create`, `notify`, `book`, `deliver`, `apply`) — retries belong on
+  idempotent reads (warning).
+- `SKY-WF-114` — bash body is essentially a single `curl` call; suggests using
+  an `http` node instead (info).
+
 ### Declared workflow params
 
 Workflows may declare typed run inputs in `⊕meta⊕` using `params.<name>.*` keys:

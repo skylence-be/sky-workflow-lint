@@ -125,10 +125,10 @@ func run(args []string) int {
 	if hasToolErr {
 		return 2
 	}
-	// Only blocking diagnostics flip the exit code; "warning" severity findings
-	// (e.g. SKY-WF-101 bash syntax/shellcheck) are advisory and exit 0.
+	// Only blocking diagnostics flip the exit code; "warning" and "info"
+	// severity findings (e.g. SKY-WF-101, SKY-WF-111..114) are advisory and exit 0.
 	for _, d := range diags {
-		if d.Severity != "warning" {
+		if d.Severity != "warning" && d.Severity != "info" {
 			return 1
 		}
 	}
