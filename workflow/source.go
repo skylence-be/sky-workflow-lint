@@ -7,6 +7,7 @@ const (
 	SourceRepo      SourceTier = "repo"
 	SourceWorkspace SourceTier = "workspace"
 	SourceUser      SourceTier = "user"
+	SourceLibrary   SourceTier = "library"
 	SourceBuiltin   SourceTier = "builtin"
 )
 
