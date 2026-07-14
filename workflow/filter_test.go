@@ -65,6 +65,20 @@ func TestLoadAllFromRoots_FilterOnlyInSet(t *testing.T) {
 
 // TestWithAllowedSources_EmptyResolvesNothing documents that an empty (but
 // present) allowlist resolves nothing; callers omit the option for no filter.
+func TestAllowsWorkflow(t *testing.T) {
+	src := "owner/allowed"
+	wf := &Workflow{Name: "deploy", LibrarySource: &src}
+	if !AllowsWorkflow(wf, WithAllowedSources("owner/allowed")) {
+		t.Fatal("expected allowed workflow to pass filter")
+	}
+	if AllowsWorkflow(wf, WithAllowedSources("owner/other")) {
+		t.Fatal("expected mismatched source to fail filter")
+	}
+	if !AllowsWorkflow(wf) {
+		t.Fatal("expected no filter to admit workflow")
+	}
+}
+
 func TestWithAllowedSources_EmptyResolvesNothing(t *testing.T) {
 	user := t.TempDir()
 	writeWFWithSource(t, user, "a", "a", "owner/allowed")

@@ -30,6 +30,12 @@ func WithAllowedSources(sources ...string) LoadOption {
 	}
 }
 
+// AllowsWorkflow reports whether wf passes the optional source filter from opts.
+// A nil filter (no WithAllowedSources) admits every workflow.
+func AllowsWorkflow(wf *Workflow, opts ...LoadOption) bool {
+	return buildLoadOptions(opts).allow(wf)
+}
+
 func buildLoadOptions(opts []LoadOption) loadOptions {
 	var o loadOptions
 	for _, fn := range opts {
